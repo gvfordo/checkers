@@ -109,17 +109,27 @@ class Board
     nil
   end
   
-  def to_s
+  def to_s(cursor, selections)
     str = " "
     9.times { |num| next if num == 0; str << "  #{num - 1}"}
     str << "\n"
     @board.each_with_index do |row, idx|
       color = (idx % 2 == 0 ? false : true )
       str << "#{idx} "
-      row.each do |square|
-        str << (square.nil? ? "   " : square.to_s)
-        .colorize(:background => (color ? :white :  :black))
-        color = !color
+      row.each_with_index do |square, col|
+        if cursor == [col, idx]
+          str << (square.nil? ? "   " : square.to_s)
+          .colorize(:background => :green)
+          color = !color
+        elsif selections.any?{ |selected| selected == [col, idx] }
+          str << (square.nil? ? "   " : square.to_s)
+          .colorize(:background => :red)
+          color = !color
+        else
+          str << (square.nil? ? "   " : square.to_s)
+          .colorize(:background => (color ? :white : :black ))
+          color = !color
+        end
       end
       str << "\n"
     end

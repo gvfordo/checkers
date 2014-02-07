@@ -1,17 +1,20 @@
 require 'colorize'
 require_relative './board'
 require_relative './errors'
+require 'io/console'
 
 class Game
-  attr_reader :board
+  attr_reader :board, :cursor, :selections
   def initialize
     @board = Board.new
     @turn = :red
+    @cursor = [0, 0]
+    @selections = []
   end  
   
   def show_board
     system('clear')
-    puts @board
+    puts @board.to_s(@cursor, @selections)
   end
   
   def play 
@@ -19,12 +22,15 @@ class Game
       show_board
       puts "It is #{@turn}'s turn"
       begin
-        start, moves = get_input_from_player
+        # start, moves = get_input_from_player
+        start, moves = magic_cursor
+        @selections = []
         @board.move_piece(start, @turn, moves)
       rescue InvalidMoveError, TypeError => e
         puts e.message
         retry
       end   
+      
       switch_turn
     end
     
@@ -32,6 +38,31 @@ class Game
   end
   
   private
+  
+  def magic_cursor
+    
+    action = ""
+    
+    until action == "c"
+      action = STDIN.getch
+      case action
+        when "w"
+          @cursor[1] -= 1 if @cursor[1] - 1 >= 0
+        when "a"
+          @cursor[0] -= 1 if @cursor[0] - 1 >= 0
+        when "s"
+          @cursor[1] += 1 if @cursor[1] + 1 < 8
+        when "d"
+          @cursor[0] += 1 if @cursor[0] + 1 < 8
+        when " "
+          @selections << @cursor.dup
+        when "q"
+          raise StandardError
+      end
+      show_board
+    end
+    [@selections[0], @selections.drop(1)]
+  end
   
   def winner
     @board.winner.to_s
