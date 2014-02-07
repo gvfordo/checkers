@@ -15,12 +15,16 @@ class Game
   def show_board
     system('clear')
     puts @board.to_s(@cursor, @selections)
+    puts "It is #{@turn}'s turn"
+    puts "WASD - moves cursor | SPACE - selects square.  C - attempt move"
+    move_strings = ""
+    moves = @selections.each { |move| move_strings << "[" + move.join(",") + "]" }
+    puts "Moves:" + move_strings
   end
   
   def play 
     until game_over?
-      show_board
-      puts "It is #{@turn}'s turn"
+      show_board   
       begin
         # start, moves = get_input_from_player
         start, moves = magic_cursor
@@ -33,7 +37,7 @@ class Game
       
       switch_turn
     end
-    
+    show_board
     puts "Congratulations #{winner} you've won the game!"
   end
   

@@ -1,10 +1,5 @@
 require_relative './piece.rb'
-
-class Fixnum
-  def double
-    self * 2
-  end
-end
+require_relative './fixnum_patch'
 
 class Board
   VECTORS = {
@@ -32,45 +27,6 @@ class Board
     raise InvalidMoveError unless self[x, y].color == color
     raise InvalidMoveError unless valid_move_seq?(starting, moves)
     perform_moves!(starting, moves)
-  end
-  
-  # private
-  def perform_slide(starting, ending)
-    return false unless legal_move?(starting, ending)
-    
-    move!(starting, ending)
-    maybe_promote(ending)
-    
-    true
-  end
-
-  # private
-  def perform_jump(starting, ending)
-    return false unless legal_move?(starting, ending, true)
-    
-    capture_piece(starting, ending)
-    move!(starting, ending)
-    maybe_promote(ending)
-    
-    true
-  end
-  
-  # private
-  def legal_move?(start, ending, jump = false)
-    # check if starting pos is on board - create on_board?(pos) method
-    return false if ending.any?{ |num| !num.between?(0, 7)}
-    return false if ending.reduce(&:+).even? # put in method - playable_square?
-    return false unless self[ending[0], ending[1]].nil? 
-    
-    move_vectors(start, jump).any? do |vector| 
-      apply_vector(start, vector) == ending 
-    end
-  end
-  
-  # private
-  def valid_move_seq?(starting, moves)
-    new_board = self.dup
-    new_board.perform_moves!(starting, moves)
   end
   
   def perform_moves!(starting, moves)
@@ -109,7 +65,7 @@ class Board
     nil
   end
   
-  def to_s(cursor, selections)
+  def to_s(cursor, selections) 
     str = " "
     9.times { |num| next if num == 0; str << "  #{num - 1}"}
     str << "\n"
@@ -118,18 +74,15 @@ class Board
       str << "#{idx} "
       row.each_with_index do |square, col|
         if cursor == [col, idx]
-          str << (square.nil? ? "   " : square.to_s)
-          .colorize(:background => :green)
-          color = !color
+          back_color = :green
         elsif selections.any?{ |selected| selected == [col, idx] }
-          str << (square.nil? ? "   " : square.to_s)
-          .colorize(:background => :red)
-          color = !color
+          back_color = :red
         else
-          str << (square.nil? ? "   " : square.to_s)
-          .colorize(:background => (color ? :white : :black ))
-          color = !color
-        end
+          back_color = (color ? :white : :black)
+        end     
+        str << (square.nil? ? "   " : square.to_s)
+        .colorize(:background => back_color)
+        color = !color
       end
       str << "\n"
     end
@@ -137,6 +90,45 @@ class Board
   end
   
   private
+  
+  def perform_slide(starting, ending)
+    return false unless legal_move?(starting, ending)
+    
+    move!(starting, ending)
+    maybe_promote(ending)
+    
+    true
+  end
+
+  def perform_jump(starting, ending)
+    return false unless legal_move?(starting, ending, true)
+    
+    capture_piece(starting, ending)
+    move!(starting, ending)
+    maybe_promote(ending)
+    
+    true
+  end
+    
+  def valid_move_seq?(starting, moves)
+    new_board = self.dup
+    new_board.perform_moves!(starting, moves)
+  end
+  
+  def legal_move?(start, ending, jump = false)
+    return false unless playable_squares(start, ending)
+    return false unless self[ending[0], ending[1]].nil? 
+    
+    move_vectors(start, jump).any? do |vector| 
+      apply_vector(start, vector) == ending 
+    end
+  end
+  
+  def playable_squares(start, ending)
+    return false if start.reduce(&:+).even?
+    return false if ending.reduce(&:+).even?
+    true
+  end
   
   def pieces_for(color)
     pieces.select{ |piece| piece.color == color }
