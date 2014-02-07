@@ -49,7 +49,6 @@ class Board
       piece = piece.dup_with_board(new_board)
       x, y = piece.pos
       new_board[x, y] = piece
-      # new_board[x, y] = Piece.new([x, y], new_board, piece.color, piece.king)
     end
   
     new_board
@@ -123,10 +122,19 @@ class Board
       apply_vector(start, vector) == ending 
     end
   end
-  
+
+  def move!(starting, ending)
+    start_x, start_y = starting
+    end_x, end_y = ending
+    
+    piece = self[start_x, start_y]
+    self[start_x, start_y] = nil
+    piece.pos = [end_x, end_y]
+    self[end_x, end_y] = piece
+  end
+    
   def playable_squares(start, ending)
-    return false if start.reduce(&:+).even?
-    return false if ending.reduce(&:+).even?
+    return false if start.reduce(&:+).even? || ending.reduce(&:+).even?
     true
   end
   
@@ -144,16 +152,6 @@ class Board
     
     promotion_row = (self[x, y].color == :red ? 0 : 7)
     self[x, y].king = true if y == promotion_row
-  end
-  
-  def move!(starting, ending)
-    start_x, start_y = starting
-    end_x, end_y = ending
-    
-    piece = self[start_x, start_y]
-    self[start_x, start_y] = nil
-    piece.pos = [end_x, end_y]
-    self[end_x, end_y] = piece
   end
   
   def capture_piece(starting, ending)
@@ -181,7 +179,7 @@ class Board
   end
   
   def set_up_grid
-     @board = Array.new(8){ Array.new(8) }
+    @board = Array.new(8){ Array.new(8) }
   end
   
   def create_pieces
